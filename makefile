@@ -1,2 +1,2 @@
 default:
-	go run main.go
+	go run main.go node.go server.go

@@ -1,18 +1,17 @@
 package main
 
-import ("fmt"
+import (
+	"fmt"
 	"net/http"
 	"code.google.com/p/go.net/websocket"
-	"github.com/crackerz/goSocketServer"
 )
-
 
 //Establish all http listeners
 func init() {
 	fmt.Printf("Configuring Server...\n")
 	http.HandleFunc("/",website)
 	http.Handle("/socket",websocket.Handler(socket))
-	goSocketServer.SetProgram("client/program.js");
+	SetRootDir("client")
 }
 
 func main() {
@@ -26,7 +25,7 @@ func website(w http.ResponseWriter, r *http.Request) {
 
 func socket(ws *websocket.Conn) {
 	fmt.Printf("Received Socket Connection...\n")
-	sh:=goSocketServer.Socket{ws,0}
-	sh.Handle()
+	n:=NewNode(ws)
+	n.Socket.Handle()
 	fmt.Printf("Handled Connection\n")
 }
