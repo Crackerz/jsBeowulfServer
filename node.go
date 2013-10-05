@@ -2,6 +2,7 @@ package main
 
 import(
 	"github.com/Crackerz/goSocketServer"
+	"code.google.com/p/go.net/websocket"
 )
 
 type Node struct {
