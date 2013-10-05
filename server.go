@@ -4,13 +4,16 @@ import(
 	"io/ioutil"
 	"os"
 	"fmt"
-	"github.com/crackerz/goSocketServer"
+	"github.com/Crackerz/goSocketServer"
+	"github.com/Crackerz/fsUtils"
 )
 
 type Cluster struct {
-	socketServer goSocketServer.SocketServer
+	socketServer *goSocketServer.SocketServer
 	RootDir string
 	program string
+	pendingJobs chan string
+	pendingNodes chan *Node
 }
 
 const (
@@ -23,13 +26,36 @@ const (
 var Server Cluster
 
 func init() {
-	Server.socketServer = goSocketServer.Server
+	Server.socketServer = &goSocketServer.Server
+	Server.socketServer.OnConnect(Server.onConnect)
+	Server.socketServer.OnDisconnect(Server.onDisconnect)
+	Server.pendingJobs = make(chan string,20)
+	Server.pendingNodes = make(chan *Node,100)
+	go jobWorker(Server.pendingJobs,Server.pendingNodes)
+}
+
+func (c *Cluster) onConnect(s *goSocketServer.Socket) {
+	NewNode(s)
+	fmt.Printf("Node %d Connected to Server...\n",s.GetId())
+}
+
+func (c *Cluster) onDisconnect(s *goSocketServer.Socket) {
+	fmt.Printf("Node %d Disconnected from Server...\n",s.GetId())
 }
 
 func SetRootDir(folder string) {
+	Server.RootDir = folder
 	slash := folder+"/"
 	initFileSystem(folder)
 	SetProgram(slash+program)
+	//Begin Monitoring for Changes
+	var monitor fsUtils.Monitor
+	go monitor.Directory(slash+pendingDir,Server.fileAdd,nil)
+}
+
+func (c *Cluster) fileAdd(filename string) {
+	fmt.Println("Detected new file: "+filename)
+	c.pendingJobs <-filename
 }
 
 func initFileSystem(folder string) {
@@ -69,5 +95,6 @@ func (c *Cluster) SetProgram(filename string) {
 	if err!=nil {
 		panic(err.Error())
 	}
-	(*c).program = string(clientProgram)
+	c.program = string(clientProgram)
+	fmt.Println(c.program)
 }

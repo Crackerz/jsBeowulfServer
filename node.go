@@ -1,16 +1,25 @@
 package main
 
 import(
-	"github.com/crackerz/goSocketServer"
-	"code.google.com/p/go.net/websocket"
+	"github.com/Crackerz/goSocketServer"
 )
 
 type Node struct {
 	uniq_id int
-	Socket goSocketServer.Socket
+	socket goSocketServer.Socket
 }
 
-func NewNode(ws *websocket.Conn) Node {
-	socket:=goSocketServer.NewSocket(ws)
-	return Node{socket.GetId(),socket}
+func NewNode(socket *goSocketServer.Socket) Node {
+	node := Node{socket.GetId(),*socket}
+	node.Write("obj = "+Server.program)
+	Server.pendingNodes <-&node
+	return node
+}
+
+func (n *Node) Handle() {
+	n.socket.Handle()
+}
+
+func (n *Node) Write(text string) {
+	n.socket.WriteString(text)
 }
