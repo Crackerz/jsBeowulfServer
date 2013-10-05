@@ -4,7 +4,7 @@ import(
 	"io/ioutil"
 	"os"
 	"fmt"
-	"github.com/crackerz/goSocketServer"
+	"github.com/Crackerz/goSocketServer"
 )
 
 type Cluster struct {

@@ -1,7 +1,7 @@
 package main
 
 import(
-	"github.com/crackerz/goSocketServer"
+	"github.com/Crackerz/goSocketServer"
 	"code.google.com/p/go.net/websocket"
 )
 
