@@ -13,6 +13,13 @@ func init() {
 	http.HandleFunc("/",website)
 	http.Handle("/socket",websocket.Handler(socket))
 	SetRootDir("client")
+	Server.socketServer = &goSocketServer.Server
+	Server.pendingJobs = make(chan string,20)
+	Server.pendingNodes = make(chan *goSocketServer.Socket,100)
+	Server.socketServer.OnConnect(nodeConnected)
+	Server.socketServer.OnDisconnect(nodeDisconnected)
+	Server.socketServer.OnMessage(nodeMessage)
+	go jobWorker(Server.pendingJobs,Server.pendingNodes)
 }
 
 func main() {

@@ -2,19 +2,27 @@ package main
 
 import(	"fmt"
 	"io/ioutil"
-	"strings")
+	"github.com/Crackerz/goSocketServer")
 
-func jobWorker(jobs chan string, nodes chan *Node) {
-	//A worker's job is never done
-	for {
+var nodeToJob map[int]string
+
+func jobWorker(jobs chan string, nodes chan *goSocketServer.Socket) {
+	nodeToJob = make(map[int]string)
+	for { //A worker's job is never done
+		fmt.Println("Searching for file...")
 		filename := <-jobs
-		node := <-nodes
-		fmt.Printf("Sending %s to Node %d\n",filename,node.uniq_id)
-		rawdata,err:=ioutil.ReadFile(Server.RootDir+"/"+pendingDir+"/"+filename)
-		strdata := strings.TrimSpace(string(rawdata))
+		fmt.Println("Found file: ",filename)
+		data,err:=ioutil.ReadFile(Server.RootDir+"/"+pendingDir+"/"+filename)
 		if err!=nil {
-			panic(err.Error())
+			fmt.Println(err.Error()+" Trying new file...")
+		} else {
+			fmt.Println("Pairing file with node...")
+			node := <-nodes
+			markProcessing(filename)
+			nodeToJob[node.GetId()] = filename
+			s:=goSocketServer.Socket(*node)
+			fmt.Printf("Sending %s to Node %d\n",filename,s.GetId())
+			node.SendBytes(data)
 		}
-		node.Write(strdata)
 	}
 }

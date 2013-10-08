@@ -2,24 +2,22 @@ package main
 
 import(
 	"github.com/Crackerz/goSocketServer"
+	"fmt"
 )
 
-type Node struct {
-	uniq_id int
-	socket goSocketServer.Socket
+func nodeConnected(s *goSocketServer.Socket) {
+	fmt.Printf("Node %d Connected to Server...\n",s.GetId())
+	s.SendBytes([]byte(Server.program))
+	Server.pendingNodes<-s
 }
 
-func NewNode(socket *goSocketServer.Socket) Node {
-	node := Node{socket.GetId(),*socket}
-	node.Write("obj = "+Server.program)
-	Server.pendingNodes <-&node
-	return node
+func nodeDisconnected(s *goSocketServer.Socket) {
+	fmt.Printf("Node %d Disconnected from Server...\n",s.GetId())
 }
 
-func (n *Node) Handle() {
-	n.socket.Handle()
-}
-
-func (n *Node) Write(text string) {
-	n.socket.WriteString(text)
+func nodeMessage(s *goSocketServer.Socket, message []byte) {
+	fmt.Println("Received Message: ", string(message)," From: ",s.GetId())
+	markComplete(nodeToJob[s.GetId()],message)
+	delete(nodeToJob,s.GetId())
+	Server.pendingNodes<-s
 }
